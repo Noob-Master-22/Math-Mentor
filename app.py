@@ -224,6 +224,10 @@ with st.sidebar:
             with st.expander(f"{m['problem'][:40]}..."):
                 st.caption(f"🕐 {m['timestamp']}")
                 st.caption(f"Feedback: {m['feedback'] or 'none'}")
+                score = m.get("evaluation", {}).get("score")
+                if score:
+                    st.caption(f"⭐ Quality score: {score}/10")  
+
     else:
         st.caption("No past problems yet.")
 
@@ -399,7 +403,10 @@ if solve_audio and edited_audio_text.strip():
 if solve_audio_upload and edited_audio_upload_text.strip():
     run_graph(edited_audio_upload_text.strip(), "audio", audio_bytes=audio_upload_bytes)
 
-
+if st.session_state.result and not st.session_state.result.get("guardrail_passed", True):
+    st.error(f"⛔ Input blocked: {st.session_state.result.get('guardrail_reason', 'Not a valid math problem')}")
+    st.session_state.result = None
+    st.stop()
 # ── HITL PANEL ────────────────────────────────────────────────────
 if st.session_state.hitl_pending and st.session_state.hitl_data:
     st.divider()
@@ -452,11 +459,18 @@ if st.session_state.result and not st.session_state.hitl_pending:
     topic = result.get("topic", "unknown")
     chunks_count = len(result.get("retrieved_chunks", []))
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     col1.metric("🎯 Topic", topic.capitalize())
     col2.metric("📚 Chunks Retrieved", chunks_count)
     color = {"high": "🟢", "medium": "🟡", "low": "🔴"}.get(confidence, "🟡")
     col3.metric("✅ Confidence", f"{color} {confidence.upper()}")
+    
+    evaluation = result.get("evaluation", {})
+    score = evaluation.get("score", "-")
+    col4.metric("⭐ Quality Score", f"{score}/10")
+
+    if evaluation.get("feedback"):
+        st.caption(f"Evaluator: {evaluation['feedback']}")
 
     if verdict:
         st.caption(f"Verifier: {verdict}")

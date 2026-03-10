@@ -15,6 +15,9 @@ class MathState(TypedDict):
     solution: str              # solver output
     verification: dict         # {confident: bool, confidence_level: str, issues: list}
     explanation: str           # explainer output
+    evaluation: dict           # evaluator output
+    guardrail_passed: bool     # guardrail bool
+    guardrail_reason: str      # guardrail reason
     memory_hint: str           # similar past problem if found
     hitl_required: bool        # whether human review is needed
     agent_trace: list          # list of {agent, output} dicts for UI
@@ -54,24 +57,34 @@ def create_graph():
     from agents.solver import solver_node
     from agents.verifier import verifier_node
     from agents.explainer import explainer_node
+    from agents.guardrail import guardrail_node      
+    from agents.evaluator import evaluator_node      
 
     builder = StateGraph(MathState)
 
+    builder.add_node("input_processor", input_processor_node)
+    builder.add_node("guardrail", guardrail_node)    
     builder.add_node("parser", parser_node)
     builder.add_node("router", router_node)
     builder.add_node("solver", solver_node)
     builder.add_node("verifier", verifier_node)
     builder.add_node("explainer", explainer_node)
+    builder.add_node("evaluator", evaluator_node)    
 
-    builder.add_node("input_processor", input_processor_node)
-    builder.set_entry_point("input_processor")         
-    builder.add_edge("input_processor", "parser") 
+    builder.set_entry_point("input_processor")
+    builder.add_edge("input_processor", "guardrail") 
+    builder.add_conditional_edges(                   
+        "guardrail",
+        lambda state: "parser" if state.get("guardrail_passed", True) else END
+    )
     builder.add_edge("parser", "router")
     builder.add_edge("router", "solver")
     builder.add_edge("solver", "verifier")
     builder.add_edge("verifier", "explainer")
-    builder.add_edge("explainer", END)
+    builder.add_edge("explainer", "evaluator")       
+    builder.add_edge("evaluator", END)               
 
     return builder.compile(checkpointer=MemorySaver())
+
 
 

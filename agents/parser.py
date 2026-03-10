@@ -5,7 +5,7 @@ from langchain_core.messages import HumanMessage
 from dotenv import load_dotenv
 
 load_dotenv()
-llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
+llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0)
 
 def parser_node(state: dict) -> dict:
     prompt = f"""You are a math problem parser. Extract and structure this math problem.

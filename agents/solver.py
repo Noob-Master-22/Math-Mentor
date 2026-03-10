@@ -20,7 +20,7 @@ def solver_node(state: dict) -> dict:
         memory_hint = (
             f"A similar problem was solved before:\n"
             f"Problem: {memory_match['problem']}\n"
-            f"Solution approach: {memory_match['solution'][:400]}\n"
+            f"Solution approach: {memory_match['solution'][:200]}\n"
             f"Student feedback: {memory_match['feedback'] or 'none yet'}"
         )
         memory_note = f"Memory match found (similarity: {memory_match['similarity']})"
@@ -29,8 +29,8 @@ def solver_node(state: dict) -> dict:
     retriever = get_retriever()
     docs = retriever.invoke(problem)
     chunks = [
-        {"source": d.metadata.get("source", "kb"), "text": d.page_content}
-        for d in docs
+    {"source": d.metadata.get("source", "kb"), "text": d.page_content[:300]}  # truncate
+    for d in docs[:2] 
     ]
 
     # Build context block — ONLY use as formula reference
@@ -71,7 +71,7 @@ Rules:
     response = llm.invoke([HumanMessage(content=prompt)])
 
     
-    save_interaction(problem, response.content)
+    save_interaction(problem, response.content, evaluation=state.get("evaluation", {}))
 
     trace = state.get("agent_trace", [])
     trace.append({
