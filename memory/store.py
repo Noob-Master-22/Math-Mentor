@@ -1,18 +1,30 @@
 import os
 import json
+import streamlit as st
 import numpy as np
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from tools.embeddings import get_embeddings
 
+
 load_dotenv()
 
 IST = timezone(timedelta(hours=5, minutes=30))
 embeddings_model = get_embeddings()
 
+
+
+
+
 def get_collection():
-    client = MongoClient(os.getenv("MONGODB_URI"))
+    # Try st.secrets first (Streamlit Cloud), fallback to .env (local)
+    try:
+        uri = st.secrets["MONGODB_URI"]
+    except Exception:
+        uri = os.getenv("MONGODB_URI")
+    
+    client = MongoClient(uri)
     return client["math_mentor"]["memory"]
 
 def get_ist_time():
