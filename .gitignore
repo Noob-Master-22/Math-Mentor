@@ -1,0 +1,19 @@
+# Environment
+.env
+venv/
+
+# Database & vector store
+chroma_db/
+memory/math_memory.db
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Test files
+test_audio.m4a
+test_image.jpg
+
+# OS
+.DS_Store
